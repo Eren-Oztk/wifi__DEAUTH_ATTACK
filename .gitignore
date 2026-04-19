@@ -1,3 +1,6 @@
+# Claude Code ayar dosyaları
+.claude/
+
 # Arduino derleme çıktıları
 build/
 *.elf
