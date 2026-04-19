@@ -1,0 +1,41 @@
+# Arduino derleme çıktıları
+build/
+*.elf
+*.bin
+*.hex
+*.map
+
+# Arduino IDE geçici dosyaları
+*.ino.cpp
+*.ino.globals.h
+
+# VS Code / Platformio
+.vscode/
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# Ortam / gizli ayarlar
+.env
+.env.local
+*.secret
+secrets.h
+credentials.h
+
+# Log dosyaları
+*.log
