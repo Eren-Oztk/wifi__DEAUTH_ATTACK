@@ -1,5 +1,7 @@
 # Taşınabilir WiFi Ağ Test Cihazı
 
+[![Live Demo](https://img.shields.io/badge/🌐_Demo-GitHub_Pages-blue)](https://eren-oztk.github.io/wifi__DEAUTH_ATTACK)
+
 > **⚠️ EĞİTİM AMAÇLIDIR — YASAL UYARI**
 >
 > Bu proje **yalnızca eğitim, araştırma ve kendi sahip olduğunuz ağlarda güvenlik testi** amacıyla hazırlanmıştır.
