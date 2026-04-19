@@ -1,6 +1,18 @@
-# Taşınabilir WiFi Ağ Test Cihazı
+<div align="center">
 
-[![Live Demo](https://img.shields.io/badge/🌐_Demo-GitHub_Pages-blue)](https://eren-oztk.github.io/wifi__DEAUTH_ATTACK)
+# 📡 WiFi Deauth Attack
+
+**`ESP32 Tabanlı Ağ Test Aracı · Deneyap Kart · Eğitim Amaçlı`**
+
+<br>
+
+[![Live Demo](https://img.shields.io/badge/🌐_Canlı_Demo-GitHub_Pages-1f6feb?style=for-the-badge)](https://eren-oztk.github.io/WiFi_DEAUTH_ATTACK)
+[![Language](https://img.shields.io/badge/C++-100%25-00599C?style=for-the-badge&logo=cplusplus)](https://github.com/Eren-Oztk/WiFi_DEAUTH_ATTACK)
+[![Platform](https://img.shields.io/badge/ESP32--S3-Deneyap_Kart-red?style=for-the-badge)](https://github.com/Eren-Oztk/WiFi_DEAUTH_ATTACK)
+
+</div>
+
+---
 
 > **⚠️ EĞİTİM AMAÇLIDIR — YASAL UYARI**
 >
