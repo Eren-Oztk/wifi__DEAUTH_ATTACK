@@ -1,324 +1,523 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taşınabilir Ağ Test Cihazı</title>
-    <style>
-        body {
-            background-color: #0d0d0d;
-            color: #e8e8e8;
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            max-width: 700px;
-            width: 100%;
-        }
-        .header {
-            border-bottom: 2px solid #ff6b35;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .header h1 { margin: 0 0 5px 0; font-size: 24px; }
-        .header p { margin: 0; color: #a0a0a0; }
-        
-        .badges {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .badge {
-            background: #222;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            color: #ff6b35;
-            border: 1px solid #ff6b35;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiFi Deauth Attack Tool — ESP32 | Eren-Oztk</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            gap: 15px;
-        }
-        .stat-card {
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            flex: 1;
-            border-top: 2px solid #ff6b35;
-        }
-        .stat-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #888; }
-        .stat-card p { margin: 0; font-size: 18px; font-weight: bold; }
+    :root {
+      --accent: #ff6b35;
+      --accent2: #ff3333;
+      --bg: #0d0d0d;
+      --bg2: #111;
+      --bg3: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #888;
+    }
 
-        .hardware-mockup {
-            background: #111;
-            border: 2px solid #333;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.1);
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      line-height: 1.6;
+    }
 
-        .oled-screen {
-            background: #000;
-            border: 4px solid #222;
-            border-radius: 5px;
-            width: 256px;
-            height: 128px;
-            margin: 0 auto 20px auto;
-            padding: 10px;
-            box-sizing: border-box;
-            overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
-        }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-        .oled-line {
-            font-size: 12px;
-            line-height: 1.4;
-            color: #fff;
-            white-space: pre;
-        }
-        .oled-line.selected {
-            background: #fff;
-            color: #000;
-            font-weight: bold;
-        }
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 32px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(13,13,13,0.95);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+    }
+    .nav-brand { font-size: 1rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
+    .nav-links { display: flex; gap: 24px; font-size: 0.85rem; color: var(--muted); }
+    .nav-links a { color: var(--muted); }
+    .nav-links a:hover { color: var(--accent); text-decoration: none; }
 
-        .controls {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        .pot-container {
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        input[type="range"] {
-            flex-grow: 1;
-            cursor: pointer;
-            accent-color: #ff6b35;
-        }
-        button {
-            background: #ff6b35;
-            color: #000;
-            border: none;
-            padding: 12px 24px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            border-radius: 4px;
-            text-transform: uppercase;
-            transition: all 0.2s;
-        }
-        button:hover { background: #ff8555; transform: scale(1.05); }
-        button:active { transform: scale(0.95); }
-        button.active { background: #ff3333; color: white; animation: pulse 1s infinite; }
+    /* ── DISCLAIMER ── */
+    .disclaimer {
+      background: #1a0a00;
+      border-left: 4px solid var(--accent2);
+      padding: 14px 32px;
+      font-size: 0.82rem;
+      color: #ffaa88;
+      text-align: center;
+    }
+    .disclaimer strong { color: var(--accent2); }
 
-        .log-panel {
-            background: #0a0a0a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 15px;
-            height: 150px;
-            overflow-y: auto;
-            color: #00ff88;
-            font-size: 0.9em;
-        }
-        .log-entry { margin-bottom: 5px; border-bottom: 1px dashed #222; padding-bottom: 5px; }
-        .log-time { color: #888; margin-right: 10px; }
-        .log-error { color: #ff3333; }
-        .log-warn { color: #ffcc00; }
+    /* ── HERO ── */
+    .hero {
+      max-width: 900px;
+      margin: 60px auto 40px;
+      padding: 0 24px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .hero p {
+      color: var(--muted);
+      max-width: 620px;
+      margin: 0 auto 28px;
+      font-size: 0.95rem;
+    }
+    .badges { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 32px; }
+    .badge {
+      background: var(--bg3);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+    }
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: 10px 24px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s, opacity 0.15s;
+      letter-spacing: 0.5px;
+    }
+    .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 51, 51, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); }
-        }
-    </style>
+    /* ── SECTIONS ── */
+    section { max-width: 900px; margin: 0 auto 60px; padding: 0 24px; }
+    .section-title {
+      font-size: 1.1rem;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── FEATURES ── */
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .feature-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 20px 16px;
+    }
+    .feature-card .icon { font-size: 1.6rem; margin-bottom: 10px; }
+    .feature-card h3 { font-size: 0.9rem; color: var(--text); margin-bottom: 6px; }
+    .feature-card p { font-size: 0.8rem; color: var(--muted); }
+
+    /* ── SCHEMATIC ── */
+    .schematic-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      overflow-x: auto;
+    }
+    pre.schematic {
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #00ff88;
+      white-space: pre;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── HARDWARE TABLE ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { background: var(--bg3); color: var(--accent); text-align: left; padding: 10px 14px; border-bottom: 2px solid var(--accent); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+    tr:hover td { background: #1c1c1c; }
+
+    /* ── DEMO ── */
+    .demo-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .demo-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* ── INLINE SIM ── */
+    .sim-container { max-width: 700px; margin: 0 auto; }
+    .sim-header { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
+    .sim-header h2 { font-size: 1.2rem; margin-bottom: 4px; }
+    .sim-header p { color: var(--muted); font-size: 0.85rem; }
+    .sim-badges { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .sim-badge {
+      background: #222; padding: 4px 10px; border-radius: 15px;
+      font-size: 0.75em; color: var(--accent); border: 1px solid var(--accent);
+    }
+    .sim-stats { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+    .sim-stat {
+      background: var(--bg3); padding: 12px; border-radius: 8px;
+      text-align: center; flex: 1; border-top: 2px solid var(--accent);
+    }
+    .sim-stat h3 { margin: 0 0 8px; font-size: 0.78rem; color: var(--muted); }
+    .sim-stat p { margin: 0; font-size: 1.1rem; font-weight: bold; }
+    .hardware-mockup {
+      background: #111; border: 2px solid #333;
+      border-radius: 15px; padding: 20px; margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(255,107,53,0.1);
+    }
+    .oled-screen {
+      background: #000; border: 4px solid #222; border-radius: 5px;
+      width: 256px; height: 128px; margin: 0 auto 20px; padding: 10px;
+      box-sizing: border-box; overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+    }
+    .oled-line { font-size: 12px; line-height: 1.4; color: #fff; white-space: pre; }
+    .oled-line.selected { background: #fff; color: #000; font-weight: bold; }
+    .controls {
+      display: flex; gap: 20px; align-items: center;
+      background: var(--bg3); padding: 14px; border-radius: 8px;
+    }
+    .pot-container { flex-grow: 1; display: flex; align-items: center; gap: 10px; }
+    input[type="range"] { flex-grow: 1; cursor: pointer; accent-color: var(--accent); }
+    .sim-btn {
+      background: var(--accent); color: #000; border: none;
+      padding: 11px 22px; cursor: pointer;
+      font-family: 'Courier New', monospace; font-weight: bold;
+      border-radius: 4px; text-transform: uppercase; transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+    .sim-btn:hover { background: #ff8555; transform: scale(1.05); }
+    .sim-btn:active { transform: scale(0.95); }
+    .sim-btn.active { background: var(--accent2); color: white; animation: pulse 1s infinite; }
+    .log-panel {
+      background: #0a0a0a; border: 1px solid #333; border-radius: 8px;
+      padding: 14px; height: 150px; overflow-y: auto;
+      color: #00ff88; font-size: 0.85em;
+    }
+    .log-entry { margin-bottom: 4px; border-bottom: 1px dashed #222; padding-bottom: 4px; }
+    .log-time { color: #888; margin-right: 8px; }
+    .log-error { color: var(--accent2); }
+    .log-warn { color: #ffcc00; }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(255,51,51,0.7); }
+      70%  { box-shadow: 0 0 0 10px rgba(255,51,51,0);   }
+      100% { box-shadow: 0 0 0 0   rgba(255,51,51,0);   }
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 32px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    footer span { color: var(--accent); }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>Taşınabilir Ağ Test Cihazı</h1>
-        <p>Çevredeki ağları donanımsal arayüzle tarayan ve seçilen ağa dayanıklılık testi uygulayan portatif sistem.</p>
-    </div>
+<!-- NAV -->
+<nav>
+  <span class="nav-brand">WiFi-DEAUTH-TOOL</span>
+  <div class="nav-links">
+    <a href="#features">Özellikler</a>
+    <a href="#schematic">Devre</a>
+    <a href="#demo">Demo</a>
+    <a href="https://github.com/Eren-Oztk/wifi__DEAUTH_ATTACK" target="_blank">GitHub</a>
+  </div>
+</nav>
 
-    <div class="badges">
-        <span class="badge">C++ / ESP32</span>
-        <span class="badge">Donanım Kesmeleri (Interrupts)</span>
-        <span class="badge">I2C OLED</span>
-        <span class="badge">Ağ Güvenliği</span>
-    </div>
-
-    <div class="stats">
-        <div class="stat-card">
-            <h3>Bulunan Ağ</h3>
-            <p id="stat-networks">0</p>
-        </div>
-        <div class="stat-card">
-            <h3>Cihaz Durumu</h3>
-            <p id="stat-status" style="color: #00ff88;">Beklemede</p>
-        </div>
-        <div class="stat-card">
-            <h3>Seçili Hedef</h3>
-            <p id="stat-target">-</p>
-        </div>
-    </div>
-
-    <div class="hardware-mockup">
-        <div class="oled-screen" id="oled-screen">
-            <div class="oled-line" style="text-align: center; margin-top: 40px;">Sistem Başlatılıyor...</div>
-        </div>
-
-        <div class="controls">
-            <div class="pot-container">
-                <span style="font-size: 24px;">🎛️</span>
-                <label for="pot-slider">Seçim (Potansiyometre):</label>
-                <input type="range" id="pot-slider" min="0" max="0" value="0" disabled>
-            </div>
-            <button id="attack-btn" disabled>Testi Başlat</button>
-        </div>
-    </div>
-
-    <div class="log-panel" id="log-panel">
-        </div>
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  <strong>⚠ EĞİTİM AMAÇLIDIR</strong> — Bu proje yalnızca kendi sahip olduğunuz ya da açık izin verilen ağlarda güvenlik testi için tasarlanmıştır.
+  İzinsiz ağlara uygulanması <strong>yasadışıdır</strong>. &nbsp;|&nbsp;
+  <strong>FOR EDUCATIONAL PURPOSES ONLY.</strong>
 </div>
 
+<!-- HERO -->
+<div class="hero">
+  <h1>WiFi Deauth Attack Tool</h1>
+  <p>ESP32 tabanlı, OLED ekranlı ve rotary encoder kontrollü taşınabilir WiFi ağ analiz ve güvenlik test cihazı.</p>
+  <div class="badges">
+    <span class="badge">ESP32</span>
+    <span class="badge">C++ / Arduino</span>
+    <span class="badge">I2C OLED 128×64</span>
+    <span class="badge">Rotary Encoder</span>
+    <span class="badge">802.11 Deauth</span>
+    <span class="badge">Donanım Kesmesi</span>
+  </div>
+  <div class="hero-btns">
+    <a href="https://github.com/Eren-Oztk/wifi__DEAUTH_ATTACK" target="_blank">
+      <button class="btn btn-primary">GitHub'da Görüntüle</button>
+    </a>
+    <a href="#demo">
+      <button class="btn btn-outline">Canlı Demo ↓</button>
+    </a>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-title">Özellikler</div>
+  <div class="features">
+    <div class="feature-card">
+      <div class="icon">📡</div>
+      <h3>Ağ Tarama</h3>
+      <p>Çevredeki tüm WiFi ağlarını SSID ve RSSI ile listeler (maks. 20 ağ).</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🖥️</div>
+      <h3>OLED Arayüz</h3>
+      <p>SSD1306 128×64 I2C ekranda seçim vurgulu ağ listesi gösterimi.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🎛️</div>
+      <h3>Rotary Encoder</h3>
+      <p>Fiziksel döner kodlayıcı ile sezgisel ağ seçimi ve menü navigasyonu.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">⚡</div>
+      <h3>Donanım Kesmesi</h3>
+      <p>Interrupt tabanlı buton yönetimi ve yazılımsal debounce (500 ms).</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🔬</div>
+      <h3>Deauth Test</h3>
+      <p>802.11 deauthentication paketi tabanlı bağlantı dayanıklılığı testi.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🌐</div>
+      <h3>Tarayıcı Simülatörü</h3>
+      <p>Donanım olmadan arayüzü test eden tam özellikli HTML/JS demo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEMATIC -->
+<section id="schematic">
+  <div class="section-title">Devre Şeması &amp; Pin Bağlantıları</div>
+  <div class="schematic-wrap">
+    <pre class="schematic">
+  ESP32 DevKit
+  ┌─────────────────────────────────────────────┐
+  │                                             │
+  │   SSD1306 OLED 128×64 (I2C)                 │
+  │   GPIO21 (SDA) ──────── SDA                 │
+  │   GPIO22 (SCL) ──────── SCL                 │
+  │   3.3V  ────────────── VCC    I2C Adr: 0x3C │
+  │   GND   ────────────── GND                  │
+  │                                             │
+  │   Rotary Encoder                            │
+  │   GPIO18 ───── CLK (A)                      │
+  │   GPIO19 ───── DT  (B)                      │
+  │   GPIO5  ───── SW  (Buton) ── INPUT_PULLUP  │
+  │   3.3V   ───── VCC  (gerekiyorsa)           │
+  │   GND    ───── GND                          │
+  │                                             │
+  │   (Alternatif — Potansiyometre)             │
+  │   GPIO34/A0 ── ORTA PIN                     │
+  │   3.3V  ─────── SOL PIN                     │
+  │   GND   ─────── SAĞ PIN                     │
+  │                                             │
+  └─────────────────────────────────────────────┘
+
+  Güç: USB-C / 5V  →  ESP32 3.3V regülatörü üzerinden beslenir.
+  OLED I2C çekme dirençleri: SDA &amp; SCL hatlarına 4.7 kΩ (3.3V'a).
+    </pre>
+  </div>
+
+  <br>
+  <table>
+    <thead>
+      <tr><th>Bileşen</th><th>Pin / Değer</th><th>Notlar</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>SSD1306 OLED — SDA</td><td>GPIO21</td><td>I2C veri hattı</td></tr>
+      <tr><td>SSD1306 OLED — SCL</td><td>GPIO22</td><td>I2C saat hattı</td></tr>
+      <tr><td>SSD1306 I2C Adres</td><td>0x3C / 0x3D</td><td>Modüle göre değişir</td></tr>
+      <tr><td>Rotary Encoder CLK</td><td>GPIO18</td><td>Interrupt — CHANGE</td></tr>
+      <tr><td>Rotary Encoder DT</td><td>GPIO19</td><td>Yön tespiti</td></tr>
+      <tr><td>Rotary Encoder SW</td><td>GPIO5</td><td>INPUT_PULLUP, FALLING</td></tr>
+      <tr><td>Potansiyometre (alt.)</td><td>GPIO34 / A0</td><td>12-bit ADC</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="section-title">Canlı Simülatör Demosu</div>
+  <div class="demo-wrap">
+    <p class="demo-note">Aşağıdaki simülatör gerçek donanımın davranışını tarayıcıda yansıtmaktadır. Kaydırıcı → potansiyometre/encoder, buton → fiziksel tetikleyici.</p>
+
+    <div class="sim-container">
+      <div class="sim-header">
+        <h2>Taşınabilir Ağ Test Cihazı</h2>
+        <p>Çevredeki ağları donanımsal arayüzle tarayan ve seçilen ağa dayanıklılık testi uygulayan portatif sistem.</p>
+      </div>
+
+      <div class="sim-badges">
+        <span class="sim-badge">C++ / ESP32</span>
+        <span class="sim-badge">Donanım Kesmesi</span>
+        <span class="sim-badge">I2C OLED</span>
+        <span class="sim-badge">Ağ Güvenliği</span>
+      </div>
+
+      <div class="sim-stats">
+        <div class="sim-stat"><h3>Bulunan Ağ</h3><p id="stat-networks">0</p></div>
+        <div class="sim-stat"><h3>Cihaz Durumu</h3><p id="stat-status" style="color:#00ff88">Beklemede</p></div>
+        <div class="sim-stat"><h3>Seçili Hedef</h3><p id="stat-target">-</p></div>
+      </div>
+
+      <div class="hardware-mockup">
+        <div class="oled-screen" id="oled-screen">
+          <div class="oled-line" style="text-align:center;margin-top:40px">Sistem Başlatılıyor...</div>
+        </div>
+        <div class="controls">
+          <div class="pot-container">
+            <span style="font-size:20px">🎛️</span>
+            <label for="pot-slider">Seçim:</label>
+            <input type="range" id="pot-slider" min="0" max="0" value="0" disabled>
+          </div>
+          <button class="sim-btn" id="attack-btn" disabled>Testi Başlat</button>
+        </div>
+      </div>
+
+      <div class="log-panel" id="log-panel"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  Geliştirici: <span>Eren-Oztk</span> &nbsp;|&nbsp;
+  <a href="https://github.com/Eren-Oztk/wifi__DEAUTH_ATTACK" target="_blank">GitHub</a>
+  &nbsp;|&nbsp; Yalnızca eğitim amaçlıdır.
+</footer>
+
 <script>
-    const networks = [
-        { ssid: "Sirket_Yonetim", rssi: -45 },
-        { ssid: "Misafir_Wifi", rssi: -62 },
-        { ssid: "Kafe_Free_5G", rssi: -71 },
-        { ssid: "Ev_Agim_2.4G", rssi: -80 },
-        { ssid: "Yazici_Setup", rssi: -88 }
-    ];
+  const networks = [
+    { ssid: "Sirket_Yonetim", rssi: -45 },
+    { ssid: "Misafir_Wifi",   rssi: -62 },
+    { ssid: "Kafe_Free_5G",   rssi: -71 },
+    { ssid: "Ev_Agim_2.4G",   rssi: -80 },
+    { ssid: "Yazici_Setup",   rssi: -88 }
+  ];
 
-    let selectedIndex = 0;
-    let isAttacking = false;
-    let attackInterval;
-    let attackCount = 0;
+  let selectedIndex = 0, isAttacking = false, attackInterval, attackCount = 0;
 
-    const oledScreen = document.getElementById('oled-screen');
-    const potSlider = document.getElementById('pot-slider');
-    const attackBtn = document.getElementById('attack-btn');
-    const logPanel = document.getElementById('log-panel');
-    const statNetworks = document.getElementById('stat-networks');
-    const statStatus = document.getElementById('stat-status');
-    const statTarget = document.getElementById('stat-target');
+  const oledScreen   = document.getElementById('oled-screen');
+  const potSlider    = document.getElementById('pot-slider');
+  const attackBtn    = document.getElementById('attack-btn');
+  const logPanel     = document.getElementById('log-panel');
+  const statNetworks = document.getElementById('stat-networks');
+  const statStatus   = document.getElementById('stat-status');
+  const statTarget   = document.getElementById('stat-target');
 
-    function log(message, type = 'info') {
-        const now = new Date();
-        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
-                        now.getMinutes().toString().padStart(2, '0') + ':' + 
-                        now.getSeconds().toString().padStart(2, '0');
-        
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        if(type === 'error') div.classList.add('log-error');
-        if(type === 'warn') div.classList.add('log-warn');
-        
-        div.innerHTML = `<span class="log-time">[${timeStr}]</span> ${message}`;
-        logPanel.appendChild(div);
-        logPanel.scrollTop = logPanel.scrollHeight;
-    }
+  function ts() {
+    const n = new Date();
+    return [n.getHours(), n.getMinutes(), n.getSeconds()]
+      .map(v => String(v).padStart(2,'0')).join(':');
+  }
 
-    function renderOLED() {
-        oledScreen.innerHTML = '';
-        networks.forEach((net, index) => {
-            const div = document.createElement('div');
-            div.className = 'oled-line' + (index === selectedIndex ? ' selected' : '');
-            // Ekran formatı: SSID (RSSI)
-            div.textContent = `${net.ssid.padEnd(14, ' ')} (${net.rssi})`;
-            oledScreen.appendChild(div);
-        });
-        statTarget.textContent = networks[selectedIndex].ssid;
-    }
+  function log(msg, type = 'info') {
+    const d = document.createElement('div');
+    d.className = 'log-entry' + (type === 'error' ? ' log-error' : type === 'warn' ? ' log-warn' : '');
+    d.innerHTML = `<span class="log-time">[${ts()}]</span> ${msg}`;
+    logPanel.appendChild(d);
+    logPanel.scrollTop = logPanel.scrollHeight;
+  }
 
-    function initSystem() {
-        log("Cihaza güç verildi. WiFi modülü (STA) başlatılıyor...", "info");
-        setTimeout(() => {
-            log("Çevredeki ağlar taranıyor...", "warn");
-            oledScreen.innerHTML = '<div class="oled-line" style="text-align: center; margin-top: 40px;">Scanning...</div>';
-            
-            setTimeout(() => {
-                statNetworks.textContent = networks.length;
-                potSlider.max = networks.length - 1;
-                potSlider.disabled = false;
-                attackBtn.disabled = false;
-                
-                log(`${networks.length} ağ bulundu. Cihaz hazır.`, "info");
-                renderOLED();
-            }, 1500);
-        }, 1000);
-    }
+  function renderOLED() {
+    oledScreen.innerHTML = '';
+    networks.forEach((net, i) => {
+      const d = document.createElement('div');
+      d.className = 'oled-line' + (i === selectedIndex ? ' selected' : '');
+      d.textContent = `${net.ssid.padEnd(14,' ')} (${net.rssi})`;
+      oledScreen.appendChild(d);
+    });
+    statTarget.textContent = networks[selectedIndex].ssid;
+  }
 
-    potSlider.addEventListener('input', (e) => {
-        if(isAttacking) {
-            e.preventDefault();
-            potSlider.value = selectedIndex; // Saldırı varken seçim değişemez
-            log("HATA: Test devam ederken hedef değiştirilemez!", "error");
-            return;
-        }
-        selectedIndex = parseInt(e.target.value);
+  function initSystem() {
+    log("Cihaza güç verildi. WiFi modülü (STA) başlatılıyor...");
+    setTimeout(() => {
+      log("Çevredeki ağlar taranıyor...", "warn");
+      oledScreen.innerHTML = '<div class="oled-line" style="text-align:center;margin-top:40px">Scanning...</div>';
+      setTimeout(() => {
+        statNetworks.textContent = networks.length;
+        potSlider.max = networks.length - 1;
+        potSlider.disabled = false;
+        attackBtn.disabled = false;
+        log(`${networks.length} ağ bulundu. Cihaz hazır.`);
         renderOLED();
-    });
+      }, 1500);
+    }, 1000);
+  }
 
-    attackBtn.addEventListener('click', () => {
-        isAttacking = !isAttacking;
-        
-        if(isAttacking) {
-            attackBtn.textContent = "Testi Durdur";
-            attackBtn.classList.add('active');
-            potSlider.disabled = true;
-            statStatus.textContent = "Aktif Test";
-            statStatus.style.color = "#ff3333";
-            attackCount = 0;
-            
-            log(`[BAŞLADI] ${networks[selectedIndex].ssid} hedefine stres testi uygulanıyor.`, "warn");
-            
-            // Simüle edilmiş paket gönderimi
-            attackInterval = setInterval(() => {
-                attackCount++;
-                if(attackCount === 4) {
-                    // Edge case / Hata senaryosu simülasyonu
-                    log(`[HATA] Hedef ağ sinyali zayıfladı veya kanal değiştirdi (Timeout).`, "error");
-                } else if (attackCount > 6 && Math.random() > 0.7) {
-                    // Rastgele düşme senaryosu
-                     log(`[BİLGİ] İstemci bağlantıları koptu.`, "info");
-                } else {
-                    log(`Test paketi gönderildi... (Tx: ${attackCount})`);
-                }
-            }, 800);
+  potSlider.addEventListener('input', e => {
+    if (isAttacking) {
+      e.preventDefault();
+      potSlider.value = selectedIndex;
+      log("HATA: Test devam ederken hedef değiştirilemez!", "error");
+      return;
+    }
+    selectedIndex = parseInt(e.target.value);
+    renderOLED();
+  });
 
+  attackBtn.addEventListener('click', () => {
+    isAttacking = !isAttacking;
+    if (isAttacking) {
+      attackBtn.textContent = "Testi Durdur";
+      attackBtn.classList.add('active');
+      potSlider.disabled = true;
+      statStatus.textContent = "Aktif Test";
+      statStatus.style.color = "#ff3333";
+      attackCount = 0;
+      log(`[BAŞLADI] ${networks[selectedIndex].ssid} hedefine stres testi uygulanıyor.`, "warn");
+      attackInterval = setInterval(() => {
+        attackCount++;
+        if (attackCount === 4) {
+          log("[HATA] Hedef ağ sinyali zayıfladı veya kanal değiştirdi (Timeout).", "error");
+        } else if (attackCount > 6 && Math.random() > 0.7) {
+          log("[BİLGİ] İstemci bağlantıları koptu.");
         } else {
-            attackBtn.textContent = "Testi Başlat";
-            attackBtn.classList.remove('active');
-            potSlider.disabled = false;
-            statStatus.textContent = "Beklemede";
-            statStatus.style.color = "#00ff88";
-            clearInterval(attackInterval);
-            log(`[DURDURULDU] Test işlemi kullanıcı tarafından iptal edildi.`, "info");
+          log(`Test paketi gönderildi... (Tx: ${attackCount})`);
         }
-    });
+      }, 800);
+    } else {
+      attackBtn.textContent = "Testi Başlat";
+      attackBtn.classList.remove('active');
+      potSlider.disabled = false;
+      statStatus.textContent = "Beklemede";
+      statStatus.style.color = "#00ff88";
+      clearInterval(attackInterval);
+      log("[DURDURULDU] Test işlemi kullanıcı tarafından iptal edildi.");
+    }
+  });
 
-    // Boot simülasyonu
-    window.onload = initSystem;
+  window.onload = initSystem;
 </script>
-
 </body>
 </html>
