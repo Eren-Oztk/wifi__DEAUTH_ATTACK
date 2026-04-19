@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taşınabilir Ağ Test Cihazı</title>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #e8e8e8;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+        }
+        .header {
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 { margin: 0 0 5px 0; font-size: 24px; }
+        .header p { margin: 0; color: #a0a0a0; }
+        
+        .badges {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .badge {
+            background: #222;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            color: #ff6b35;
+            border: 1px solid #ff6b35;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        .stat-card {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            border-top: 2px solid #ff6b35;
+        }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #888; }
+        .stat-card p { margin: 0; font-size: 18px; font-weight: bold; }
+
+        .hardware-mockup {
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.1);
+        }
+
+        .oled-screen {
+            background: #000;
+            border: 4px solid #222;
+            border-radius: 5px;
+            width: 256px;
+            height: 128px;
+            margin: 0 auto 20px auto;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+        }
+
+        .oled-line {
+            font-size: 12px;
+            line-height: 1.4;
+            color: #fff;
+            white-space: pre;
+        }
+        .oled-line.selected {
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .pot-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            cursor: pointer;
+            accent-color: #ff6b35;
+        }
+        button {
+            background: #ff6b35;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 4px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        button:hover { background: #ff8555; transform: scale(1.05); }
+        button:active { transform: scale(0.95); }
+        button.active { background: #ff3333; color: white; animation: pulse 1s infinite; }
+
+        .log-panel {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            color: #00ff88;
+            font-size: 0.9em;
+        }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px dashed #222; padding-bottom: 5px; }
+        .log-time { color: #888; margin-right: 10px; }
+        .log-error { color: #ff3333; }
+        .log-warn { color: #ffcc00; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 51, 51, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Taşınabilir Ağ Test Cihazı</h1>
+        <p>Çevredeki ağları donanımsal arayüzle tarayan ve seçilen ağa dayanıklılık testi uygulayan portatif sistem.</p>
+    </div>
+
+    <div class="badges">
+        <span class="badge">C++ / ESP32</span>
+        <span class="badge">Donanım Kesmeleri (Interrupts)</span>
+        <span class="badge">I2C OLED</span>
+        <span class="badge">Ağ Güvenliği</span>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Bulunan Ağ</h3>
+            <p id="stat-networks">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Cihaz Durumu</h3>
+            <p id="stat-status" style="color: #00ff88;">Beklemede</p>
+        </div>
+        <div class="stat-card">
+            <h3>Seçili Hedef</h3>
+            <p id="stat-target">-</p>
+        </div>
+    </div>
+
+    <div class="hardware-mockup">
+        <div class="oled-screen" id="oled-screen">
+            <div class="oled-line" style="text-align: center; margin-top: 40px;">Sistem Başlatılıyor...</div>
+        </div>
+
+        <div class="controls">
+            <div class="pot-container">
+                <span style="font-size: 24px;">🎛️</span>
+                <label for="pot-slider">Seçim (Potansiyometre):</label>
+                <input type="range" id="pot-slider" min="0" max="0" value="0" disabled>
+            </div>
+            <button id="attack-btn" disabled>Testi Başlat</button>
+        </div>
+    </div>
+
+    <div class="log-panel" id="log-panel">
+        </div>
+</div>
+
+<script>
+    const networks = [
+        { ssid: "Sirket_Yonetim", rssi: -45 },
+        { ssid: "Misafir_Wifi", rssi: -62 },
+        { ssid: "Kafe_Free_5G", rssi: -71 },
+        { ssid: "Ev_Agim_2.4G", rssi: -80 },
+        { ssid: "Yazici_Setup", rssi: -88 }
+    ];
+
+    let selectedIndex = 0;
+    let isAttacking = false;
+    let attackInterval;
+    let attackCount = 0;
+
+    const oledScreen = document.getElementById('oled-screen');
+    const potSlider = document.getElementById('pot-slider');
+    const attackBtn = document.getElementById('attack-btn');
+    const logPanel = document.getElementById('log-panel');
+    const statNetworks = document.getElementById('stat-networks');
+    const statStatus = document.getElementById('stat-status');
+    const statTarget = document.getElementById('stat-target');
+
+    function log(message, type = 'info') {
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                        now.getMinutes().toString().padStart(2, '0') + ':' + 
+                        now.getSeconds().toString().padStart(2, '0');
+        
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        if(type === 'error') div.classList.add('log-error');
+        if(type === 'warn') div.classList.add('log-warn');
+        
+        div.innerHTML = `<span class="log-time">[${timeStr}]</span> ${message}`;
+        logPanel.appendChild(div);
+        logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    function renderOLED() {
+        oledScreen.innerHTML = '';
+        networks.forEach((net, index) => {
+            const div = document.createElement('div');
+            div.className = 'oled-line' + (index === selectedIndex ? ' selected' : '');
+            // Ekran formatı: SSID (RSSI)
+            div.textContent = `${net.ssid.padEnd(14, ' ')} (${net.rssi})`;
+            oledScreen.appendChild(div);
+        });
+        statTarget.textContent = networks[selectedIndex].ssid;
+    }
+
+    function initSystem() {
+        log("Cihaza güç verildi. WiFi modülü (STA) başlatılıyor...", "info");
+        setTimeout(() => {
+            log("Çevredeki ağlar taranıyor...", "warn");
+            oledScreen.innerHTML = '<div class="oled-line" style="text-align: center; margin-top: 40px;">Scanning...</div>';
+            
+            setTimeout(() => {
+                statNetworks.textContent = networks.length;
+                potSlider.max = networks.length - 1;
+                potSlider.disabled = false;
+                attackBtn.disabled = false;
+                
+                log(`${networks.length} ağ bulundu. Cihaz hazır.`, "info");
+                renderOLED();
+            }, 1500);
+        }, 1000);
+    }
+
+    potSlider.addEventListener('input', (e) => {
+        if(isAttacking) {
+            e.preventDefault();
+            potSlider.value = selectedIndex; // Saldırı varken seçim değişemez
+            log("HATA: Test devam ederken hedef değiştirilemez!", "error");
+            return;
+        }
+        selectedIndex = parseInt(e.target.value);
+        renderOLED();
+    });
+
+    attackBtn.addEventListener('click', () => {
+        isAttacking = !isAttacking;
+        
+        if(isAttacking) {
+            attackBtn.textContent = "Testi Durdur";
+            attackBtn.classList.add('active');
+            potSlider.disabled = true;
+            statStatus.textContent = "Aktif Test";
+            statStatus.style.color = "#ff3333";
+            attackCount = 0;
+            
+            log(`[BAŞLADI] ${networks[selectedIndex].ssid} hedefine stres testi uygulanıyor.`, "warn");
+            
+            // Simüle edilmiş paket gönderimi
+            attackInterval = setInterval(() => {
+                attackCount++;
+                if(attackCount === 4) {
+                    // Edge case / Hata senaryosu simülasyonu
+                    log(`[HATA] Hedef ağ sinyali zayıfladı veya kanal değiştirdi (Timeout).`, "error");
+                } else if (attackCount > 6 && Math.random() > 0.7) {
+                    // Rastgele düşme senaryosu
+                     log(`[BİLGİ] İstemci bağlantıları koptu.`, "info");
+                } else {
+                    log(`Test paketi gönderildi... (Tx: ${attackCount})`);
+                }
+            }, 800);
+
+        } else {
+            attackBtn.textContent = "Testi Başlat";
+            attackBtn.classList.remove('active');
+            potSlider.disabled = false;
+            statStatus.textContent = "Beklemede";
+            statStatus.style.color = "#00ff88";
+            clearInterval(attackInterval);
+            log(`[DURDURULDU] Test işlemi kullanıcı tarafından iptal edildi.`, "info");
+        }
+    });
+
+    // Boot simülasyonu
+    window.onload = initSystem;
+</script>
+
+</body>
+</html>
